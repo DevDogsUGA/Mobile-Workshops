@@ -19,6 +19,9 @@ class Guestbook extends StatefulWidget {
 }
 
 class _GuestbookState extends State<Guestbook> {
+  final _nameController = TextEditingController();
+  final _bodyController = TextEditingController();
+
   Session? _session;
   List<Map<String, dynamic>> _messages = [];
 
@@ -33,6 +36,13 @@ class _GuestbookState extends State<Guestbook> {
     });
 
     _loadMessages();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _bodyController.dispose();
+    super.dispose();
   }
 
   // Load the guestbook, newest first.
@@ -61,6 +71,25 @@ class _GuestbookState extends State<Guestbook> {
 
   Future<void> _signOut() => _supabase.auth.signOut();
 
+  Future<void> _submit() async {
+    final name = _nameController.text.trim();
+    final body = _bodyController.text.trim();
+    final session = _session;
+
+    // Reject the entry if either field is empty once whitespace is trimmed.
+    if (session == null || name.isEmpty || body.isEmpty) {
+      return;
+    }
+
+    // The name is whatever the signed-in user typed into the field below.
+    // (The next commit looks this up server-side instead.)
+    await _supabase.from('messages').insert({'author_name': name, 'body': body});
+
+    _nameController.clear();
+    _bodyController.clear();
+    await _loadMessages();
+  }
+
   @override
   Widget build(BuildContext context) {
     final session = _session;
@@ -83,8 +112,27 @@ class _GuestbookState extends State<Guestbook> {
                       child: const Text('Sign out'),
                     ),
             ),
-            const SizedBox(height: 8),
-            const Text('Anyone can read the guestbook below. Posting is coming next.'),
+            if (session != null) ...[
+              const SizedBox(height: 8),
+              TextField(
+                controller: _nameController,
+                decoration: const InputDecoration(labelText: 'Name'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _bodyController,
+                decoration: const InputDecoration(labelText: 'Message'),
+              ),
+              const SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: _submit,
+                child: const Text('Sign the guestbook'),
+              ),
+            ] else
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Text('Sign in to leave a message. Anyone can read below.'),
+              ),
             const Divider(height: 32),
             Expanded(
               child: ListView.builder(
