@@ -49,6 +49,32 @@ You should see a **Hello, World!** screen. From there, follow along with the wor
 flutter test
 ```
 
+## 02 · Supabase
+
+Branch `02-supabase` adds a real backend to the guestbook: sign-in,
+row-level security, and a Postgres table instead of in-memory state.
+
+1. Create a project at [supabase.com](https://supabase.com), or run
+   `npx supabase start` to spin one up locally.
+2. Apply the two migrations under `supabase/migrations/` in order — either
+   paste each file into the dashboard's SQL editor, or let
+   `supabase start` / `supabase db reset` apply them for you.
+3. Add "Sign in with DevDogs" as an OAuth provider:
+
+   ```bash
+   pnpm dlx @devdogsuga/devtools oauth
+   ```
+
+   Note: this provider is stored outside the migrations, so it needs to be
+   re-added any time you run `supabase db reset`.
+4. Copy `.env.example` to `.env.local` and fill in your project's URL and
+   publishable key (both on the dashboard, under Project Settings > API).
+5. Run with those values baked in via `--dart-define-from-file`:
+
+   ```bash
+   flutter run -d web-server --web-port 3000 --dart-define-from-file=.env.local
+   ```
+
 ## Project layout
 
 - `lib/main.dart` — app entry point and root widget
@@ -56,6 +82,7 @@ flutter test
 
 ## Deep links
 
-The app already registers the `org.devdogsuga.mobileworkshops://login-callback` redirect scheme
-on Android and iOS. It isn't used yet — a later workshop wires it up for Supabase OAuth sign-in —
-but the scheme has to already be in place before that lands.
+The app registers the `org.devdogsuga.mobileworkshops://login-callback` redirect scheme on
+Android and iOS, and the guestbook's sign-in button already points at it on those platforms. Flutter
+web is the target we actually teach and demo, though, so this scheme mostly sits ready for whenever
+someone runs the app on a device instead.
