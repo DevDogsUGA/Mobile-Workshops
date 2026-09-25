@@ -19,7 +19,6 @@ class Guestbook extends StatefulWidget {
 }
 
 class _GuestbookState extends State<Guestbook> {
-  final _nameController = TextEditingController();
   final _bodyController = TextEditingController();
 
   Session? _session;
@@ -40,7 +39,6 @@ class _GuestbookState extends State<Guestbook> {
 
   @override
   void dispose() {
-    _nameController.dispose();
     _bodyController.dispose();
     super.dispose();
   }
@@ -50,7 +48,7 @@ class _GuestbookState extends State<Guestbook> {
     try {
       final rows = await _supabase
           .from('messages')
-          .select('id, user_id, author_name, body, created_at')
+          .select('id, user_id, body, created_at, profiles(name)')
           .order('created_at', ascending: false);
       if (mounted) {
         setState(() => _messages = List<Map<String, dynamic>>.from(rows));
@@ -72,20 +70,17 @@ class _GuestbookState extends State<Guestbook> {
   Future<void> _signOut() => _supabase.auth.signOut();
 
   Future<void> _submit() async {
-    final name = _nameController.text.trim();
     final body = _bodyController.text.trim();
     final session = _session;
-
-    // Reject the entry if either field is empty once whitespace is trimmed.
-    if (session == null || name.isEmpty || body.isEmpty) {
+    if (session == null || body.isEmpty) {
       return;
     }
 
-    // The name is whatever the signed-in user typed into the field below.
-    // (The next commit looks this up server-side instead.)
-    await _supabase.from('messages').insert({'author_name': name, 'body': body});
+    // The name is looked up server-side from public.profiles (set once, at
+    // sign-up) -- we never send it from the client, so no one can post
+    // under a name that isn't theirs.
+    await _supabase.from('messages').insert({'body': body});
 
-    _nameController.clear();
     _bodyController.clear();
     await _loadMessages();
   }
@@ -115,13 +110,8 @@ class _GuestbookState extends State<Guestbook> {
             if (session != null) ...[
               const SizedBox(height: 8),
               TextField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Name'),
-              ),
-              const SizedBox(height: 8),
-              TextField(
                 controller: _bodyController,
-                decoration: const InputDecoration(labelText: 'Message'),
+                decoration: const InputDecoration(labelText: 'Leave a message'),
               ),
               const SizedBox(height: 8),
               ElevatedButton(
@@ -139,8 +129,15 @@ class _GuestbookState extends State<Guestbook> {
                 itemCount: _messages.length,
                 itemBuilder: (context, index) {
                   final message = _messages[index];
+                  // Embedded from public.profiles via the messages ->
+                  // profiles foreign key. messages.user_id -> profiles.id is
+                  // many-to-one, so PostgREST returns a single object here
+                  // (or null) -- never a list.
+                  final profile = message['profiles'] as Map<String, dynamic>?;
+                  final authorName = profile?['name'] as String? ?? 'Unknown';
+
                   return ListTile(
-                    title: Text(message['author_name'] as String),
+                    title: Text(authorName),
                     subtitle: Text(message['body'] as String),
                     trailing: Text(_formatTime(message['created_at'] as String)),
                   );

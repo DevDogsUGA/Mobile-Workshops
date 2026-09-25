@@ -35,11 +35,14 @@ class _InMemoryAsyncStorage extends GotrueAsyncStorage {
 void main() {
   setUpAll(() async {
     // Answer every request with one canned message instead of a real
-    // Supabase project.
+    // Supabase project. The embedded `profiles` comes back as a single
+    // object (never a list) because messages.user_id -> profiles.id is
+    // many-to-one.
     final fakeClient = MockClient((request) async {
       return http.Response(
-        '[{"id": "1", "user_id": "u1", "author_name": "Ada", '
-        '"body": "Great workshop!", "created_at": "2026-09-28T12:00:00Z"}]',
+        '[{"id": "1", "user_id": "u1", '
+        '"body": "Great workshop!", "created_at": "2026-09-28T12:00:00Z", '
+        '"profiles": {"name": "Ada"}}]',
         200,
         headers: {'content-type': 'application/json'},
         request: request,
