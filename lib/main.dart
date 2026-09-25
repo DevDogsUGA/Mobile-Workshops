@@ -1,7 +1,21 @@
-import 'package:flutter_workshop/shell.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() {
+import 'package:flutter_workshop/shell.dart';
+
+Future<void> main() async {
+  // Supabase needs plugins (e.g. for secure storage) registered before it
+  // can initialize.
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Both values are supplied at build/run time with
+  // `--dart-define-from-file=.env.local` -- see the README. Neither is a
+  // secret: the publishable key is safe to ship in a client app.
+  await Supabase.initialize(
+    url: const String.fromEnvironment('SUPABASE_URL'),
+    publishableKey: const String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY'),
+  );
+
   runApp(const MyApp());
 }
 
