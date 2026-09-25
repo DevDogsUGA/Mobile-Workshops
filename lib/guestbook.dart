@@ -1,7 +1,14 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final _supabase = Supabase.instance.client;
+
+/// Where the OAuth provider should send the browser (web) or the app
+/// (mobile) back to once sign-in finishes. The scheme below is already
+/// registered in the Android/iOS deep-link setup from `01-flutter-intro`.
+String get _redirectTo =>
+    kIsWeb ? Uri.base.origin : 'org.devdogsuga.mobileworkshops://login-callback';
 
 /// The guestbook, now backed by Supabase instead of an in-memory list.
 class Guestbook extends StatefulWidget {
@@ -12,11 +19,19 @@ class Guestbook extends StatefulWidget {
 }
 
 class _GuestbookState extends State<Guestbook> {
+  Session? _session;
   List<Map<String, dynamic>> _messages = [];
 
   @override
   void initState() {
     super.initState();
+
+    // Keep track of whether anyone is signed in, and react to sign-in/out.
+    _session = _supabase.auth.currentSession;
+    _supabase.auth.onAuthStateChange.listen((data) {
+      setState(() => _session = data.session);
+    });
+
     _loadMessages();
   }
 
@@ -37,15 +52,39 @@ class _GuestbookState extends State<Guestbook> {
     }
   }
 
+  Future<void> _signIn() {
+    return _supabase.auth.signInWithOAuth(
+      OAuthProvider('custom:devdogsuga'),
+      redirectTo: _redirectTo,
+    );
+  }
+
+  Future<void> _signOut() => _supabase.auth.signOut();
+
   @override
   Widget build(BuildContext context) {
+    final session = _session;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Guestbook')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            const Text('Anyone can read the guestbook below. Sign-in is coming next.'),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: session == null
+                  ? ElevatedButton(
+                      onPressed: _signIn,
+                      child: const Text('Sign in with DevDogs'),
+                    )
+                  : OutlinedButton(
+                      onPressed: _signOut,
+                      child: const Text('Sign out'),
+                    ),
+            ),
+            const SizedBox(height: 8),
+            const Text('Anyone can read the guestbook below. Posting is coming next.'),
             const Divider(height: 32),
             Expanded(
               child: ListView.builder(

@@ -1,5 +1,5 @@
-// Widget test for the read-only guestbook: it lists whatever Supabase
-// returns, newest first.
+// Widget test for the signed-out guestbook: it's read-only, with a sign-in
+// prompt, and it lists whatever Supabase returns, newest first.
 //
 // We give Supabase a fake HTTP client instead of a real project, so this
 // test never touches the network.
@@ -59,10 +59,11 @@ void main() {
     );
   });
 
-  testWidgets('lists messages loaded from Supabase', (tester) async {
+  testWidgets('signed out: shows a sign-in prompt and lists messages', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: Guestbook()));
     await tester.pumpAndSettle();
 
+    expect(find.text('Sign in with DevDogs'), findsOneWidget);
     expect(find.text('Ada'), findsOneWidget);
     expect(find.text('Great workshop!'), findsOneWidget);
   });
