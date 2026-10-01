@@ -1,4 +1,4 @@
-import 'package:flutter_workshop/homepage.dart';
+import 'package:flutter_workshop/shell.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const HomePage(),
+      home: const Shell(),
     );
   }
 }
