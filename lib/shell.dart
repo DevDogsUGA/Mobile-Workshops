@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:flutter_workshop/guestbook.dart';
 import 'package:flutter_workshop/homepage.dart';
 
 /// Wraps HomePage and Guestbook in a bottom NavigationBar so you can switch
@@ -14,7 +15,7 @@ class Shell extends StatefulWidget {
 class _ShellState extends State<Shell> {
   int _selectedIndex = 0;
 
-  static const _pages = [HomePage(), Center(child: Text('Guestbook'))];
+  static const _pages = [HomePage(), Guestbook()];
 
   @override
   Widget build(BuildContext context) {
